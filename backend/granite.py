@@ -9,6 +9,53 @@ logger = logging.getLogger(__name__)
 MODEL = "granite3.2-vision:2b"
 
 
+PRODUCT_ALIASES = {
+
+    "ps5": "PlayStation 5",
+    "playstation 5": "PlayStation 5",
+    "playstation": "PlayStation 5",
+
+    "ps4": "PlayStation 4",
+    "playstation 4": "PlayStation 4",
+
+    "iphone": "iPhone",
+    "ipad": "iPad",
+    "macbook": "MacBook",
+
+    "airpods": "AirPods",
+    "apple watch": "Apple Watch",
+
+    "galaxy": "Samsung Galaxy",
+    "samsung": "Samsung Galaxy",
+
+    "pixel": "Google Pixel",
+
+    "surface": "Microsoft Surface",
+
+    "xbox": "Xbox Series",
+
+    "switch": "Nintendo Switch",
+
+    "steam deck": "Steam Deck"
+
+}
+
+
+def normalize_listing(listing):
+
+    product = (listing.get("product_name") or "").lower()
+
+    for alias, official in PRODUCT_ALIASES.items():
+
+        if alias in product:
+
+            listing["product_name"] = official
+
+            break
+
+    return listing
+
+
 def analyze_text(text: str):
 
     if not text:
@@ -24,17 +71,10 @@ def analyze_text(text: str):
     prompt = f"""
 The following text was extracted from a Facebook Marketplace screenshot.
 
-Ignore:
+Ignore browser text, URLs, dates, weather, page navigation,
+and application names.
 
-- browser interface
-- tabs
-- URLs
-- dates
-- times
-- navigation text
-- application names
-
-Only extract information that belongs to the Marketplace listing itself.
+Extract ONLY the Marketplace listing.
 
 Marketplace Listing:
 
@@ -78,6 +118,8 @@ Return ONLY valid JSON.
             response["message"]["content"]
 
         )
+
+        listing = normalize_listing(listing)
 
         return {
 

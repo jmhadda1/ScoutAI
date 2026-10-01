@@ -1,24 +1,144 @@
 """
 pricing.py
 
-Curated market value ranges used by Scout Engine.
-
-Version 1 only supports a limited number of products.
+Supported products and estimated market ranges.
 """
 
-MARKET_VALUES = {
+PRODUCTS = {
+
+    # ------------------------
+    # Apple
+    # ------------------------
 
     "iphone": {
-        "low": 500,
+        "aliases": ["iphone"],
+        "category": "Phone",
+        "low": 350,
+        "high": 1500
+    },
+
+    "ipad": {
+        "aliases": ["ipad"],
+        "category": "Tablet",
+        "low": 200,
         "high": 1200
     },
 
     "macbook": {
-        "low": 600,
-        "high": 2000
+        "aliases": ["macbook", "macbook pro", "macbook air"],
+        "category": "Laptop",
+        "low": 500,
+        "high": 2500
     },
 
+    "apple watch": {
+        "aliases": ["apple watch"],
+        "category": "Wearable",
+        "low": 120,
+        "high": 900
+    },
+
+    "airpods": {
+        "aliases": ["airpods", "airpods pro", "airpods max"],
+        "category": "Audio",
+        "low": 60,
+        "high": 650
+    },
+
+    # ------------------------
+    # Samsung / Google
+    # ------------------------
+
+    "samsung galaxy": {
+        "aliases": ["galaxy", "samsung"],
+        "category": "Phone",
+        "low": 200,
+        "high": 1400
+    },
+
+    "google pixel": {
+        "aliases": ["pixel", "google pixel"],
+        "category": "Phone",
+        "low": 200,
+        "high": 1200
+    },
+
+    # ------------------------
+    # Windows Laptops
+    # ------------------------
+
+    "surface": {
+        "aliases": ["surface"],
+        "category": "Laptop",
+        "low": 300,
+        "high": 1800
+    },
+
+    "dell": {
+        "aliases": ["dell", "xps"],
+        "category": "Laptop",
+        "low": 250,
+        "high": 1800
+    },
+
+    "hp": {
+        "aliases": ["hp", "spectre"],
+        "category": "Laptop",
+        "low": 250,
+        "high": 1800
+    },
+
+    "lenovo": {
+        "aliases": ["lenovo", "thinkpad"],
+        "category": "Laptop",
+        "low": 250,
+        "high": 1800
+    },
+
+    # ------------------------
+    # Gaming
+    # ------------------------
+
     "playstation": {
+        "aliases": [
+            "playstation",
+            "ps5",
+            "ps4",
+            "playstation 5",
+            "playstation 4"
+        ],
+        "category": "Gaming",
+        "low": 200,
+        "high": 700
+    },
+
+    "xbox": {
+        "aliases": [
+            "xbox",
+            "series x",
+            "series s",
+            "xbox one"
+        ],
+        "category": "Gaming",
+        "low": 180,
+        "high": 700
+    },
+
+    "switch": {
+        "aliases": [
+            "switch",
+            "nintendo switch"
+        ],
+        "category": "Gaming",
+        "low": 150,
+        "high": 500
+    },
+
+    "steam deck": {
+        "aliases": [
+            "steam deck"
+        ],
+        "category": "Gaming",
         "low": 250,
         "high": 700
     }
@@ -26,44 +146,50 @@ MARKET_VALUES = {
 }
 
 
-def get_market_range(product_name):
+def normalize_product(product_name):
 
-    if product_name is None:
+    if not product_name:
         return None
 
     product = product_name.lower()
 
-    if "iphone" in product:
-        return MARKET_VALUES["iphone"]
+    for key, value in PRODUCTS.items():
 
-    if "macbook" in product:
-        return MARKET_VALUES["macbook"]
+        for alias in value["aliases"]:
 
-    if "playstation" in product or "ps5" in product or "ps4" in product:
-        return MARKET_VALUES["playstation"]
+            if alias in product:
+
+                return key
 
     return None
 
 
 def supported_product(product_name):
 
-    if product_name is None:
-        return False
+    return normalize_product(product_name) is not None
 
-    product = product_name.lower()
 
-    supported = [
+def get_market_range(product_name):
 
-        "iphone",
+    normalized = normalize_product(product_name)
 
-        "macbook",
+    if normalized is None:
+        return None
 
-        "playstation",
+    return {
 
-        "ps5",
+        "low": PRODUCTS[normalized]["low"],
 
-        "ps4"
+        "high": PRODUCTS[normalized]["high"]
 
-    ]
+    }
 
-    return any(x in product for x in supported)
+
+def get_category(product_name):
+
+    normalized = normalize_product(product_name)
+
+    if normalized is None:
+        return None
+
+    return PRODUCTS[normalized]["category"]

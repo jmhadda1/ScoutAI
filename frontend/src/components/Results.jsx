@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
-function AnimatedScore({ score, color }) {
-  const [displayScore, setDisplayScore] = useState(0);
+function AnimatedScore({ score }) {
+  const [display, setDisplay] = useState(0);
 
   useEffect(() => {
     let current = 0;
@@ -14,96 +14,98 @@ function AnimatedScore({ score, color }) {
         clearInterval(timer);
       }
 
-      setDisplayScore(current);
+      setDisplay(current);
     }, 20);
 
     return () => clearInterval(timer);
   }, [score]);
 
+  let color = "#22c55e";
+
+  if (score < 75) color = "#f59e0b";
+  if (score < 50) color = "#ef4444";
+
   return (
     <div
       className="confidence-score"
-      style={{
-        background: color,
-      }}
+      style={{ background: color }}
     >
-      {displayScore}
+      {display}
     </div>
   );
 }
 
 function Results({ analysis, onReset }) {
+
   const listing = analysis?.listing || {};
   const scout = analysis?.scout || {};
 
   const score = scout.score ?? 0;
 
-  const scoreColor =
-    score >= 85
-      ? "#22c55e"
-      : score >= 60
-      ? "#f59e0b"
-      : "#ef4444";
+  let status = "Recommended";
+  let statusColor = "#22c55e";
+  let icon = "🟢";
 
-  const scoreLabel = scout.rating || "Analysis Complete";
+  if (score < 75) {
+    status = "Review Carefully";
+    statusColor = "#f59e0b";
+    icon = "🟡";
+  }
 
-  function getProductIcon(name = "") {
+  if (score < 50) {
+    status = "High Risk";
+    statusColor = "#ef4444";
+    icon = "🔴";
+  }
+
+  function productIcon(name = "") {
+
     const product = name.toLowerCase();
 
     if (product.includes("iphone")) return "📱";
     if (product.includes("macbook")) return "💻";
-    if (product.includes("ps")) return "🎮";
     if (product.includes("playstation")) return "🎮";
+    if (product.includes("xbox")) return "🎮";
+    if (product.includes("switch")) return "🎮";
     if (product.includes("airpods")) return "🎧";
     if (product.includes("watch")) return "⌚";
 
     return "📦";
+
   }
 
   return (
+
     <>
+
       <h1>Scout AI</h1>
 
-      <h2>Purchase Confidence</h2>
-
-      <p
-  style={{
-    marginTop: "8px",
-    marginBottom: "20px",
-    color: "#666",
-    fontSize: "15px"
-  }}
->
-  AI-powered analysis of a Facebook Marketplace listing
-</p>
+      <h2>AI Purchase Analysis</h2>
 
       <div className="results-card">
 
-        <AnimatedScore
-          score={score}
-          color={scoreColor}
-        />
+        <AnimatedScore score={score} />
 
-        <h3
-          className="confidence-text"
+        <h2
           style={{
-            color: scoreColor,
+            marginTop: 20,
+            color: statusColor
           }}
         >
-          {scoreLabel}
-        </h3>
+          {icon} {status}
+        </h2>
 
         <hr />
 
         <div className="result-section">
 
           <h4>
-            {getProductIcon(listing.product_name)} Product
+
+            {productIcon(listing.product_name)} Product
+
           </h4>
 
-          <p>
-            {listing.product_name || "Unknown"}
-          </p>
+          <p>{listing.product_name || "Unknown"}</p>
 
         </div>
 
@@ -112,9 +114,11 @@ function Results({ analysis, onReset }) {
           <h4>💲 Asking Price</h4>
 
           <p>
+
             {listing.asking_price
               ? `$${listing.asking_price}`
               : "Not detected"}
+
           </p>
 
         </div>
@@ -124,12 +128,15 @@ function Results({ analysis, onReset }) {
           <h4>📦 Condition</h4>
 
           <p>
+
             {listing.condition || "Unknown"}
+
           </p>
 
         </div>
 
         {listing.storage && (
+
           <div className="result-section">
 
             <h4>💾 Storage</h4>
@@ -137,22 +144,22 @@ function Results({ analysis, onReset }) {
             <p>{listing.storage}</p>
 
           </div>
+
         )}
 
-<div
-  className={`recommendation ${
-    score >= 85
-      ? "good"
-      : score >= 60
-      ? "warning"
-      : "bad"
-  }`}
->        
-          <h4>🛡 Purchase Recommendation</h4>
+        <div
+          className="recommendation"
+          style={{
+            borderLeft: `6px solid ${statusColor}`
+          }}
+        >
+
+          <h4>🛡 Scout Recommendation</h4>
 
           <p>
-            {scout.recommendation ||
-              "No recommendation available."}
+
+            {scout.recommendation}
+
           </p>
 
         </div>
@@ -163,36 +170,32 @@ function Results({ analysis, onReset }) {
 
           <ul>
 
-            {(scout.reasons || []).map(
-              (reason, index) => (
-                <li key={index}>
-                  ✅ {reason}
-                </li>
-              )
-            )}
+            {(scout.reasons || []).map((reason, index) => (
+
+              <li key={index}>
+
+                ✅ {reason}
+
+              </li>
+
+            ))}
 
           </ul>
 
         </div>
 
         <button onClick={onReset}>
+
           ✨ Analyze Another Listing
+
         </button>
 
       </div>
+
     </>
+
   );
+
 }
-<p
-  style={{
-    marginTop: "25px",
-    fontSize: "13px",
-    color: "#888",
-    textAlign: "center"
-  }}
->
-  Scout AI provides decision support only.
-  Always inspect items before purchasing.
-</p>
 
 export default Results;

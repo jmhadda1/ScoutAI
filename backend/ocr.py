@@ -8,6 +8,17 @@ _reader_lock = Lock()
 IGNORE_PATTERNS = [
 
     "Evaluate Venture Idea",
+    "facebook",
+    "marketplace",
+    "Listed",
+    "hours ago",
+    "Phoenix;",
+    "GP",
+    "dx",
+    "post",
+    "ref-search",
+    "referral",
+    "story_type",
     "Scout AI",
     "Swagger",
     "Search",

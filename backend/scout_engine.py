@@ -3,52 +3,45 @@ from pricing import get_market_range, supported_product
 
 def calculate_scout_score(listing):
 
-    score = 100
-    reasons = []
-
     product = listing.get("product_name")
     asking_price = listing.get("asking_price")
-    description = listing.get("description") or ""
-    condition = listing.get("condition")
-    storage = listing.get("storage")
+    description = (listing.get("description") or "").strip()
+    condition = (listing.get("condition") or "").strip()
+    storage = (listing.get("storage") or "").strip()
+    seller_notes = (listing.get("seller_notes") or "").strip()
 
-    # -----------------------------
+    # ----------------------------
     # Supported Product
-    # -----------------------------
+    # ----------------------------
 
     if not supported_product(product):
 
         return {
-
             "score": 0,
-
             "rating": "Unsupported Product",
-
             "recommendation":
-                "Scout AI Version 1 currently supports iPhones, MacBooks, and PlayStations.",
-
+                "Scout AI does not currently support this product category.",
             "market_range": None,
-
             "reasons": [
-
                 "Unsupported product category."
-
             ]
-
         }
-
-    # -----------------------------
-    # Market Value
-    # -----------------------------
 
     market = get_market_range(product)
 
     market_low = market["low"]
     market_high = market["high"]
 
+    score = 50
+    reasons = []
+
+    # ----------------------------
+    # Price
+    # ----------------------------
+
     if asking_price is None:
 
-        score -= 20
+        score -= 15
 
         reasons.append("Unable to identify asking price.")
 
@@ -56,78 +49,148 @@ def calculate_scout_score(listing):
 
         if asking_price < market_low * 0.60:
 
-            score -= 20
+            score -= 30
 
-            reasons.append("Listing price is significantly below expected market value.")
+            reasons.append(
+                "Price is much lower than expected market value."
+            )
 
-        elif asking_price > market_high * 1.30:
+        elif asking_price < market_low:
 
             score -= 10
 
-            reasons.append("Listing price is above expected market value.")
+            reasons.append(
+                "Price is below typical market value."
+            )
+
+        elif asking_price <= market_high:
+
+            score += 20
+
+            reasons.append(
+                "Listing price falls within the expected market range."
+            )
+
+        elif asking_price <= market_high * 1.20:
+
+            score += 5
+
+            reasons.append(
+                "Price is slightly above market value."
+            )
 
         else:
 
-            reasons.append("Listing price falls within the expected market range.")
+            score -= 15
 
-    # -----------------------------
+            reasons.append(
+                "Price is well above market value."
+            )
+
+    # ----------------------------
     # Description
-    # -----------------------------
+    # ----------------------------
 
-    if len(description) < 20:
+    if len(description) >= 60:
+
+        score += 10
+
+        reasons.append(
+            "Listing contains a detailed description."
+        )
+
+    elif len(description) >= 25:
+
+        score += 5
+
+        reasons.append(
+            "Listing contains a basic description."
+        )
+
+    else:
 
         score -= 10
 
-        reasons.append("Listing description is limited.")
+        reasons.append(
+            "Description is very limited."
+        )
 
-    else:
-
-        reasons.append("Listing contains a detailed description.")
-
-    # -----------------------------
-    # Storage
-    # -----------------------------
-
-    if storage:
-
-        reasons.append("Storage capacity identified.")
-
-    else:
-
-        score -= 5
-
-        reasons.append("Storage capacity not specified.")
-
-    # -----------------------------
+    # ----------------------------
     # Condition
-    # -----------------------------
+    # ----------------------------
 
     if condition:
 
-        reasons.append("Item condition identified.")
+        score += 10
+
+        reasons.append(
+            "Item condition identified."
+        )
+
+    else:
+
+        score -= 10
+
+        reasons.append(
+            "Condition not specified."
+        )
+
+    # ----------------------------
+    # Storage
+    # ----------------------------
+
+    if storage:
+
+        score += 5
+
+        reasons.append(
+            "Storage capacity identified."
+        )
 
     else:
 
         score -= 5
 
-        reasons.append("Item condition not specified.")
+        reasons.append(
+            "Storage capacity not specified."
+        )
 
-    # -----------------------------
-    # Clamp Score
-    # -----------------------------
+    # ----------------------------
+    # Seller Notes
+    # ----------------------------
 
-    score = max(0, min(score, 100))
+    if len(seller_notes) >= 20:
 
-    # -----------------------------
+        score += 5
+
+    elif seller_notes:
+
+        score += 2
+
+    else:
+
+        score -= 5
+
+        reasons.append(
+            "Very little seller information provided."
+        )
+
+    # ----------------------------
+    # Clamp
+    # ----------------------------
+
+    score = max(0, min(100, score))
+
+    # ----------------------------
     # Rating
-    # -----------------------------
+    # ----------------------------
 
     if score >= 90:
 
         rating = "Excellent Buy"
 
         recommendation = (
-            "This listing appears trustworthy based on the available information."
+            "Everything looks strong. Verify the item in person before purchasing."
         )
 
     elif score >= 75:
@@ -135,15 +198,23 @@ def calculate_scout_score(listing):
         rating = "Good Buy"
 
         recommendation = (
-            "Overall this listing looks reasonable, but review it carefully."
+            "Overall this appears to be a solid listing, but verify functionality before purchasing."
         )
 
-    elif score >= 50:
+    elif score >= 60:
 
-        rating = "Fair Purchase"
+        rating = "Fair Buy"
 
         recommendation = (
-            "Proceed carefully and verify the product before meeting."
+            "Some important information is missing. Ask the seller additional questions before meeting."
+        )
+
+    elif score >= 40:
+
+        rating = "Caution"
+
+        recommendation = (
+            "Several risk factors were detected. Proceed carefully."
         )
 
     else:
@@ -151,7 +222,7 @@ def calculate_scout_score(listing):
         rating = "High Risk"
 
         recommendation = (
-            "Multiple warning signs were detected. Proceed with caution."
+            "This listing contains multiple warning signs. Exercise caution before proceeding."
         )
 
     return {
@@ -163,11 +234,8 @@ def calculate_scout_score(listing):
         "recommendation": recommendation,
 
         "market_range": {
-
             "low": market_low,
-
             "high": market_high
-
         },
 
         "reasons": reasons
